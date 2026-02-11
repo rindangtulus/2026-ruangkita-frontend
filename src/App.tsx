@@ -6,8 +6,34 @@ function App() {
   const [borrowings, setBorrowings] = useState<Borrowing[]>([]);
   const [rooms, setRooms] = useState<Room[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedBorrowing, setSelectedBorrowing] = useState<Borrowing | null>(null);
   
-  // State untuk Form Input
+  const handleUpdateStatus = async (id: number, newStatus: string) => {
+    try {
+      await axios.patch(`http://localhost:5276/api/borrowings/${id}/status`, {
+        status: newStatus
+      });
+      alert(`Status berhasil diubah menjadi ${newStatus}`);
+      setSelectedBorrowing(null); // Tutup modal
+      fetchData(); // Refresh tabel
+    } catch (err) {
+      alert("Gagal mengubah status");
+    }
+  };
+
+  const handleDelete = async (id: number) => {
+    if (window.confirm("Apakah Anda yakin ingin menghapus data peminjaman ini secara permanen?")) {
+      try {
+        await axios.delete(`http://localhost:5276/api/borrowings/${id}`);
+        alert("Data berhasil dihapus!");
+        setSelectedBorrowing(null);
+        fetchData();
+      } catch (err) {
+        console.error(err);
+        alert("Gagal menghapus data.");
+      }
+    }
+  };
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
   roomId: 0,
@@ -39,13 +65,15 @@ function App() {
     } catch (err) { console.error(err); }
   };
 
-const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
   
   if (formData.roomId === 0) {
     alert("Silakan pilih ruangan terlebih dahulu!");
     return;
   }
+
+  
 
   try {
     const payload = {
@@ -168,6 +196,7 @@ const handleSubmit = async (e: React.FormEvent) => {
                 <th className="p-4 font-bold text-slate-700">Peminjam</th>
                 <th className="p-4 font-bold text-slate-700">Ruangan</th>
                 <th className="p-4 font-bold text-slate-700">Status</th>
+                <th className="p-4 font-bold text-slate-700 text-center">Aksi</th>
               </tr>
             </thead>
             <tbody>
@@ -180,18 +209,84 @@ const handleSubmit = async (e: React.FormEvent) => {
                   <td className="p-4 text-slate-600">{b.room?.name || 'Umum'}</td>
                   <td className="p-4">
                     <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                      b.status === 'Approved' ? 'bg-green-100 text-green-700' :
+                      b.status === 'Approved' ? 'bg-green-100 text-green-700' : 
                       b.status === 'Rejected' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'
                     }`}>
                       {b.status}
                     </span>
                   </td>
+                  <td className="p-4 text-center">
+                    <button 
+                      onClick={() => setSelectedBorrowing(b)}
+                      className="text-blue-600 hover:underline font-semibold"
+                    >
+                      Lihat Detail
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
-          {loading && <p className="p-10 text-center text-slate-400">Mensinkronkan data...</p>}
         </div>
+        {/* MODAL DETAIL (Muncul kalau selectedBorrowing tidak null) */}
+        {selectedBorrowing && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-2xl max-w-md w-full p-8 shadow-2xl animate-in zoom-in-95 duration-200">
+              <h3 className="text-2xl font-bold text-slate-800 mb-6">Detail Peminjaman</h3>
+              
+              <div className="space-y-4 mb-8">
+                <div>
+                  <p className="text-sm text-slate-500">Nama Peminjam</p>
+                  <p className="font-bold text-slate-700">{selectedBorrowing.borrowerName}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-slate-500">Keperluan</p>
+                  <p className="text-slate-700">{selectedBorrowing.purpose}</p>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-slate-500">Dari</p>
+                    <p className="text-sm font-medium">{new Date(selectedBorrowing.borrowDate).toLocaleString('id-ID')}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-slate-500">Sampai</p>
+                    <p className="text-sm font-medium">{new Date(selectedBorrowing.returnDate).toLocaleString('id-ID')}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Tombol Aksi */}
+              <div className="flex flex-col gap-3">
+                <div className="flex gap-3">
+                  <button 
+                    onClick={() => handleUpdateStatus(selectedBorrowing.id, 'Approved')}
+                    className="flex-1 bg-green-600 text-white py-3 rounded-xl font-bold hover:bg-green-700 transition"
+                  >
+                    Approve
+                  </button>
+                  <button 
+                    onClick={() => handleUpdateStatus(selectedBorrowing.id, 'Rejected')}
+                    className="flex-1 bg-red-600 text-white py-3 rounded-xl font-bold hover:bg-red-700 transition"
+                  >
+                    Reject
+                  </button>
+                </div>
+                <button 
+                  onClick={() => handleDelete(selectedBorrowing.id)}
+                  className="w-full bg-white text-red-600 border border-red-200 py-3 rounded-xl font-bold hover:bg-red-50 transition"
+                >
+                  🗑️ Hapus Peminjaman
+                </button>
+                <button 
+                  onClick={() => setSelectedBorrowing(null)}
+                  className="w-full bg-slate-100 text-slate-600 py-3 rounded-xl font-bold hover:bg-slate-200 transition"
+                >
+                  Kembali
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );
