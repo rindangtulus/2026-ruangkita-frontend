@@ -100,7 +100,7 @@ export default function Rooms() {
                 Nama Ruangan
               </label>
               <input
-                className="w-full p-2.5 border rounded-xl outline-none focus:ring-2 focus:ring-pink-500"
+                className="w-full p-2.5 border border-slate-400 rounded-xl outline-none focus:ring-2 focus:ring-pink-500"
                 value={formData.name}
                 onChange={(e) =>
                   setFormData({ ...formData, name: e.target.value })
@@ -114,7 +114,7 @@ export default function Rooms() {
               </label>
               <input
                 type="number"
-                className="w-full p-2.5 border rounded-xl outline-none focus:ring-2 focus:ring-pink-500"
+                className="w-full p-2.5 border border-slate-400 rounded-xl outline-none focus:ring-2 focus:ring-pink-500"
                 value={formData.capacity}
                 onChange={(e) =>
                   setFormData({ ...formData, capacity: Number(e.target.value) })
@@ -127,7 +127,7 @@ export default function Rooms() {
                 Fasilitas
               </label>
               <textarea
-                className="w-full p-2.5 border rounded-xl outline-none focus:ring-2 focus:ring-pink-500"
+                className="w-full p-2.5 border border-slate-400 rounded-xl outline-none focus:ring-2 focus:ring-pink-500"
                 value={formData.facility}
                 onChange={(e) =>
                   setFormData({ ...formData, facility: e.target.value })

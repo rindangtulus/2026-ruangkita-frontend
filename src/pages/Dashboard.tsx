@@ -125,15 +125,15 @@ export default function Dashboard() {
       setShowForm(false);
       fetchData();
     } catch (err: any) {
-      // 3. Cara melihat detail error 400 yang sebenarnya:
-      const backendErrors = err.response?.data?.errors;
-      console.error("Detail Validasi Backend:", backendErrors);
+      const serverMessage = err.response?.data?.message;
 
-      if (backendErrors) {
-        // Menampilkan pesan error spesifik (misal: "Field RoomId is required")
-        alert("❌ Gagal simpan! Alasan: " + JSON.stringify(backendErrors));
+      if (serverMessage) {
+        alert("❌ Gagal: " + serverMessage);
       } else {
-        alert("❌ Gagal simpan! Periksa koneksi atau format data.");
+        const errorMsg =
+          JSON.stringify(err.response?.data?.errors) ||
+          "Format data tidak sesuai";
+        alert("❌ Gagal simpan! Alasan: " + errorMsg);
       }
     }
   };
@@ -367,6 +367,65 @@ export default function Dashboard() {
                     "id-ID",
                   )}
                 </div>
+              </div>
+            </div>
+            <div className="mb-8">
+              <p className="text-xs font-bold text-slate-400 uppercase mb-3 tracking-widest">
+                Riwayat Status
+              </p>
+              <div className="space-y-3">
+                {selectedBorrowing.statusHistories &&
+                selectedBorrowing.statusHistories.length > 0 ? (
+                  selectedBorrowing.statusHistories.map((history, index) => (
+                    <div
+                      key={history.id}
+                      className="flex items-start gap-3 relative"
+                    >
+                      {/* Garis Vertikal ala Timeline */}
+                      {index !==
+                        selectedBorrowing.statusHistories!.length - 1 && (
+                        <div className="absolute left-[11px] top-6 w-0.5 h-6 bg-slate-100"></div>
+                      )}
+
+                      {/* Dot Bulat */}
+                      <div
+                        className={`w-6 h-6 rounded-full flex shrink-0 items-center justify-center text-[10px] font-bold ${
+                          history.status === "Approved"
+                            ? "bg-green-100 text-green-600"
+                            : history.status === "Rejected"
+                              ? "bg-red-100 text-red-600"
+                              : "bg-amber-100 text-amber-600"
+                        }`}
+                      >
+                        {index + 1}
+                      </div>
+
+                      <div className="flex-1">
+                        <div className="flex justify-between items-center">
+                          <p className="text-sm font-bold text-slate-700">
+                            {history.status}
+                          </p>
+                          <p className="text-[10px] text-slate-400">
+                            {new Date(history.changedAt).toLocaleString(
+                              "id-ID",
+                              { hour: "2-digit", minute: "2-digit" },
+                            )}
+                          </p>
+                        </div>
+                        <p className="text-[10px] text-slate-400 italic">
+                          {new Date(history.changedAt).toLocaleDateString(
+                            "id-ID",
+                            { day: "numeric", month: "short" },
+                          )}
+                        </p>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-xs text-slate-400 italic">
+                    Belum ada riwayat status.
+                  </p>
+                )}
               </div>
             </div>
             <div className="flex flex-col gap-3">
