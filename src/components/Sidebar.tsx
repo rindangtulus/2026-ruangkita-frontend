@@ -1,4 +1,3 @@
-// src/components/Sidebar.tsx
 export default function Sidebar({
   activePage,
   setActivePage,
@@ -19,6 +18,7 @@ export default function Sidebar({
           </span>
         </div>
         <ul className="space-y-2 font-medium">
+          {/* MENU 1: DASHBOARD (STATISTIK) */}
           <li>
             <button
               onClick={() => setActivePage("dashboard")}
@@ -32,7 +32,7 @@ export default function Sidebar({
                 className={`w-5 h-5 transition duration-75 ${
                   activePage === "dashboard"
                     ? "text-pink-600"
-                    : "text-slate-400 group-hover:text-slate-900"
+                    : "text-slate-400 group-hover:text-pink-500"
                 }`}
                 aria-hidden="true"
                 xmlns="http://www.w3.org/2000/svg"
@@ -45,6 +45,36 @@ export default function Sidebar({
               <span className="ms-3 font-bold">Dashboard</span>
             </button>
           </li>
+
+          {/* MENU 2: DAFTAR PEMINJAMAN (TABEL) */}
+          <li>
+            <button
+              onClick={() => setActivePage("borrowing-list")}
+              className={`flex items-center w-full p-3 rounded-xl transition-all group ${
+                activePage === "borrowing-list"
+                  ? "bg-pink-50 text-pink-600 shadow-sm"
+                  : "text-slate-600 hover:bg-slate-100"
+              }`}
+            >
+              <svg
+                className={`w-5 h-5 transition duration-75 ${
+                  activePage === "borrowing-list"
+                    ? "text-pink-600"
+                    : "text-slate-400 group-hover:text-pink-500"
+                }`}
+                aria-hidden="true"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
+                <path d="M7 3a1 1 0 0 0 0 2h6a1 1 0 1 0 0-2H7Z" />
+                <path d="M4 17a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2h-1.172a2 2 0 0 0-1.414-.586H8.586A2 2 0 0 0 7.172 3H6a2 2 0 0 0-2 2v12Zm2-2h8v2H6v-2Zm0-4h8v2H6v-2Zm0-4h8v2H6V7Z" />
+              </svg>
+              <span className="ms-3 font-bold">Daftar Peminjaman</span>
+            </button>
+          </li>
+
+          {/* MENU 3: TAMBAH RUANGAN */}
           <li>
             <button
               onClick={() => setActivePage("rooms")}
@@ -58,7 +88,7 @@ export default function Sidebar({
                 className={`w-5 h-5 transition duration-75 ${
                   activePage === "rooms"
                     ? "text-pink-600"
-                    : "text-slate-400 group-hover:text-slate-900"
+                    : "text-slate-400 group-hover:text-pink-500"
                 }`}
                 aria-hidden="true"
                 xmlns="http://www.w3.org/2000/svg"

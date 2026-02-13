@@ -1,19 +1,30 @@
 import { useState } from "react";
 import Sidebar from "./components/Sidebar";
 import Dashboard from "./pages/Dashboard";
+import BorrowingList from "./pages/BorrowingList";
 import Rooms from "./pages/Rooms";
 
 function App() {
   const [activePage, setActivePage] = useState("dashboard");
 
-  return (
-    <main>
-      <div className="min-h-screen bg-slate-50 flex">
-        <Sidebar activePage={activePage} setActivePage={setActivePage} />
+  const renderPage = () => {
+    switch (activePage) {
+      case "dashboard":
+        return <Dashboard setActivePage={setActivePage} />;
+      case "borrowing-list":
+        return <BorrowingList />;
+      case "rooms":
+        return <Rooms />;
+      default:
+        return <Dashboard setActivePage={setActivePage} />;
+    }
+  };
 
-        {activePage === "dashboard" ? <Dashboard /> : <Rooms />}
-      </div>
-    </main>
+  return (
+    <div className="flex">
+      <Sidebar activePage={activePage} setActivePage={setActivePage} />
+      <main className="flex-1">{renderPage()}</main>
+    </div>
   );
 }
 
