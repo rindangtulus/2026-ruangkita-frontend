@@ -24,10 +24,10 @@ export default function Dashboard({
       .then((res) => setRooms(res.data));
   }, [user]);
 
-  const today = new Date().toISOString().split("T")[0];
-  const totalToday = borrowings.filter((b) =>
-    b.borrowDate.startsWith(today),
-  ).length;
+  // const today = new Date().toISOString().split("T")[0];
+  // const totalToday = borrowings.filter((b) =>
+  //   b.borrowDate.startsWith(today),
+  // ).length;
 
   const pendingCount = borrowings.filter((b) => b.status === "Pending").length;
   const approvedCount = borrowings.filter(

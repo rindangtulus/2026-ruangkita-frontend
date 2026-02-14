@@ -142,7 +142,6 @@ export default function BorrowingList({ user }: { user: any }) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const existingData = borrowings.find((b) => b.id === isEditing);
       const payload = {
         id: isEditing || 0,
         roomId: Number(formData.roomId),
@@ -150,14 +149,16 @@ export default function BorrowingList({ user }: { user: any }) {
         borrowDate: new Date(formData.borrowDate).toISOString(),
         returnDate: new Date(formData.returnDate).toISOString(),
         purpose: formData.purpose,
-        status: existingData ? existingData.status : "Pending",
+        status: "Pending",
         userId: user.id,
       };
 
       if (isEditing) {
-        await axios.put(`${API_URL}/${isEditing}`, payload);
+        const res = await axios.put(`${API_URL}/${isEditing}`, payload);
+        alert(res.data.message || "Data berhasil diperbarui!");
       } else {
         await axios.post(API_URL, payload);
+        alert("Peminjaman Berhasil Dicatat!");
       }
       setFormData({
         roomId: 0,
