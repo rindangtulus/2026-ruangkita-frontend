@@ -4,10 +4,12 @@ import Dashboard from "./pages/Dashboard";
 import BorrowingList from "./pages/BorrowingList";
 import Rooms from "./pages/Rooms";
 import Login from "./pages/Login";
+import Register from "./pages/Register";
 
 export default function App() {
   const [user, setUser] = useState<any>(null);
   const [activePage, setActivePage] = useState("dashboard");
+  const [isRegistering, setIsRegistering] = useState(false);
 
   useEffect(() => {
     const savedUser = localStorage.getItem("user");
@@ -23,7 +25,14 @@ export default function App() {
   };
 
   if (!user) {
-    return <Login onLoginSuccess={(userData) => setUser(userData)} />;
+    return isRegistering ? (
+      <Register onBackToLogin={() => setIsRegistering(false)} />
+    ) : (
+      <Login
+        onLoginSuccess={(userData) => setUser(userData)}
+        onGoToRegister={() => setIsRegistering(true)}
+      />
+    );
   }
 
   const renderPage = () => {

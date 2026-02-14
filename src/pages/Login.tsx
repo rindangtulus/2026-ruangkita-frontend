@@ -3,8 +3,10 @@ import axios from "axios";
 
 export default function Login({
   onLoginSuccess,
+  onGoToRegister,
 }: {
   onLoginSuccess: (user: any) => void;
+  onGoToRegister: () => void;
 }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -28,7 +30,6 @@ export default function Login({
   return (
     <div className="min-h-screen flex items-center justify-center bg-pink-50 font-sans p-4">
       <div className="bg-white p-10 rounded-[40px] shadow-2xl shadow-pink-200 w-full max-w-md border border-pink-100 relative overflow-hidden">
-        {/* Dekorasi Bulat Pink */}
         <div className="absolute -top-10 -right-10 w-32 h-32 bg-pink-100 rounded-full opacity-50"></div>
 
         <div className="relative z-10 text-center mb-10">
@@ -79,6 +80,18 @@ export default function Login({
           >
             MASUK SEKARANG
           </button>
+          <div className="mt-6 text-center">
+            <p className="text-sm text-slate-400 font-medium">
+              Belum punya akun?{" "}
+              <button
+                type="button"
+                onClick={onGoToRegister}
+                className="text-pink-600 font-black hover:underline"
+              >
+                Daftar di sini
+              </button>
+            </p>
+          </div>
         </form>
       </div>
     </div>
