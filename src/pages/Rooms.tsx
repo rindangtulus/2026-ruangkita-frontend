@@ -168,7 +168,6 @@ export default function Rooms() {
           )}
         </form>
 
-        {/* Daftar Ruangan yang Tersedia */}
         <div className="lg:col-span-2">
           <h3 className="text-lg font-bold text-slate-700 mb-4">
             Ruangan Tersedia ({rooms.length})
