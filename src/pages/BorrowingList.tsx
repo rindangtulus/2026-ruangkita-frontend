@@ -1,8 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import axios from "axios";
 import { type Borrowing, type Room } from "../types";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
-export default function BorrowingList() {
+export default function BorrowingList({ user }: { user: any }) {
   const [borrowings, setBorrowings] = useState<Borrowing[]>([]);
   const [rooms, setRooms] = useState<Room[]>([]);
   const [loading, setLoading] = useState(true);
@@ -20,13 +22,21 @@ export default function BorrowingList() {
     returnDate: "",
     purpose: "",
   });
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(7);
 
   const API_URL = "http://localhost:5276/api/borrowings";
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
+    setLoading(true);
     try {
       const res = await axios.get(API_URL, {
-        params: { search: searchTerm, status: statusFilter },
+        params: {
+          search: searchTerm,
+          status: statusFilter,
+          role: user.role,
+          userId: user.id,
+        },
       });
       setBorrowings(res.data);
     } catch (err) {
@@ -34,12 +44,15 @@ export default function BorrowingList() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [searchTerm, statusFilter, user, API_URL]);
 
   useEffect(() => {
-    const delayDebounceFn = setTimeout(() => fetchData(), 300);
+    const delayDebounceFn = setTimeout(() => {
+      fetchData();
+      setCurrentPage(1);
+    }, 300);
     return () => clearTimeout(delayDebounceFn);
-  }, [searchTerm, statusFilter]);
+  }, [fetchData]);
 
   useEffect(() => {
     axios
@@ -47,19 +60,54 @@ export default function BorrowingList() {
       .then((res) => setRooms(res.data));
   }, []);
 
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = borrowings.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(borrowings.length / (itemsPerPage || 1));
+
+  const paginate = (pageNumber: number) => {
+    setCurrentPage(pageNumber);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const exportToPDF = () => {
+    const doc = new jsPDF();
+
+    doc.setFontSize(18);
+    doc.text("Laporan Peminjaman RuangKita", 14, 22);
+
+    doc.setFontSize(11);
+    doc.setTextColor(100);
+    doc.text(`Dicetak pada: ${new Date().toLocaleString("id-ID")}`, 14, 30);
+
+    const tableData = borrowings.map((b, index) => [
+      index + 1,
+      b.borrowerName,
+      b.room?.name || "N/A",
+      new Date(b.borrowDate).toLocaleDateString("id-ID"),
+      b.status,
+      b.purpose,
+    ]);
+
+    autoTable(doc, {
+      startY: 35,
+      head: [["No", "Peminjam", "Ruangan", "Tanggal", "Status", "Keperluan"]],
+      body: tableData,
+      headStyles: { fillColor: [236, 72, 153] },
+      styles: { font: "helvetica", fontSize: 10 },
+    });
+
+    doc.save(`Laporan_RuangKita_${new Date().getTime()}.pdf`);
+  };
+
   const handleUpdateStatus = async (id: number, newStatus: string) => {
     try {
       const response = await axios.patch(`${API_URL}/${id}/status`, {
         status: newStatus,
       });
-
       alert(`Status berhasil diubah menjadi ${newStatus}`);
-
       await fetchData();
-
-      if (response.data) {
-        setSelectedBorrowing(response.data);
-      }
+      if (response.data) setSelectedBorrowing(response.data);
     } catch (err) {
       alert("Gagal mengubah status");
     }
@@ -94,33 +142,24 @@ export default function BorrowingList() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      // 1. Ambil data asli jika sedang mengedit untuk mempertahankan status
-      const existingData = borrowings.find((b) => b.id === isEditing);
-
-      // 2. Susun Payload dengan sangat hati-hati
       const payload = {
-        id: isEditing || 0, // Beberapa Backend butuh ID di dalam body saat PUT
+        id: isEditing || 0,
         roomId: Number(formData.roomId),
         borrowerName: formData.borrowerName,
         borrowDate: new Date(formData.borrowDate).toISOString(),
         returnDate: new Date(formData.returnDate).toISOString(),
         purpose: formData.purpose,
-        status: existingData ? existingData.status : "Pending",
+        status: "Pending",
+        userId: user.id,
       };
 
-      console.log("Payload dikirim:", payload);
-
       if (isEditing) {
-        // Gunakan PUT untuk Update
-        await axios.put(`${API_URL}/${isEditing}`, payload);
-        alert("✅ Data berhasil diperbarui!");
+        const res = await axios.put(`${API_URL}/${isEditing}`, payload);
+        alert(res.data.message || "Data berhasil diperbarui!");
       } else {
-        // Gunakan POST untuk Tambah Baru
         await axios.post(API_URL, payload);
-        alert("✅ Peminjaman Berhasil Dicatat!");
+        alert("Peminjaman Berhasil Dicatat!");
       }
-
-      // Reset & Refresh
       setFormData({
         roomId: 0,
         borrowerName: "",
@@ -131,17 +170,8 @@ export default function BorrowingList() {
       setIsEditing(null);
       setShowForm(false);
       fetchData();
-    } catch (err: any) {
-      const serverMessage = err.response?.data?.message;
-
-      if (serverMessage) {
-        alert("❌ Gagal: " + serverMessage);
-      } else {
-        const errorMsg =
-          JSON.stringify(err.response?.data?.errors) ||
-          "Format data tidak sesuai";
-        alert("❌ Gagal simpan! Alasan: " + errorMsg);
-      }
+    } catch (err) {
+      alert("Gagal simpan data");
     }
   };
 
@@ -151,21 +181,44 @@ export default function BorrowingList() {
       <div className="flex justify-between items-center mb-8">
         <div>
           <h2 className="text-3xl font-bold text-slate-800 tracking-tight">
-            Manajemen Peminjaman
+            {user.role === "Admin"
+              ? "Manajemen Peminjaman"
+              : "Daftar Peminjamanku"}
           </h2>
           <p className="text-slate-500">
             Pantau dan kelola reservasi ruangan PENS.
           </p>
         </div>
-        <button
-          onClick={() => {
-            setShowForm(!showForm);
-            if (!showForm) setIsEditing(null);
-          }}
-          className="bg-pink-500 text-white px-6 py-2.5 rounded-xl font-bold hover:bg-pink-600 transition shadow-lg shadow-pink-200"
-        >
-          {showForm ? "✖ Tutup Form" : "➕ Tambah Peminjaman"}
-        </button>
+        <div>
+          <button
+            onClick={exportToPDF}
+            className="flex-auto items-center gap-2 m-6 bg-white border-2 border-pink-500 text-pink-500 px-5 py-2.5 rounded-2xl font-bold hover:bg-pink-50 transition-all shadow-sm active:scale-95"
+          >
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+              />
+            </svg>
+            Cetak PDF
+          </button>
+          <button
+            onClick={() => {
+              setShowForm(!showForm);
+              if (!showForm) setIsEditing(null);
+            }}
+            className="bg-pink-500 text-white px-6 py-2.5 rounded-xl font-bold hover:bg-pink-600 transition shadow-lg shadow-pink-200"
+          >
+            {showForm ? "✖ Tutup Form" : "➕ Tambah Peminjaman"}
+          </button>
+        </div>
       </div>
 
       {/* Search & Filter */}
@@ -295,7 +348,7 @@ export default function BorrowingList() {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {borrowings.map((b) => (
+            {currentItems.map((b) => (
               <tr key={b.id} className="hover:bg-slate-50 transition">
                 <td className="p-4 italic">
                   <div className="font-bold text-slate-800 not-italic">
@@ -336,6 +389,37 @@ export default function BorrowingList() {
             Data tidak ditemukan...
           </p>
         )}
+      </div>
+      <div className="flex justify-center items-center mt-8 gap-2">
+        <button
+          onClick={() => paginate(currentPage - 1)}
+          disabled={currentPage === 1}
+          className="p-2 rounded-lg border border-slate-200 disabled:opacity-30 hover:bg-pink-50 text-pink-600 transition"
+        >
+          ←
+        </button>
+
+        {[...Array(totalPages)].map((_, i) => (
+          <button
+            key={i + 1}
+            onClick={() => paginate(i + 1)}
+            className={`w-10 h-10 rounded-xl font-bold transition-all ${
+              currentPage === i + 1
+                ? "bg-pink-500 text-white shadow-lg shadow-pink-200"
+                : "bg-white border border-slate-200 text-slate-600 hover:border-pink-400"
+            }`}
+          >
+            {i + 1}
+          </button>
+        ))}
+
+        <button
+          onClick={() => paginate(currentPage + 1)}
+          disabled={currentPage === totalPages}
+          className="p-2 rounded-lg border border-slate-200 disabled:opacity-30 hover:bg-pink-50 text-pink-600 transition"
+        >
+          →
+        </button>
       </div>
 
       {/* Modal Detail */}
@@ -440,37 +524,50 @@ export default function BorrowingList() {
               </div>
             </div>
             <div className="flex flex-col gap-3">
-              <div className="flex gap-3">
-                <button
-                  onClick={() =>
-                    handleUpdateStatus(selectedBorrowing.id, "Approved")
-                  }
-                  className="flex-1 bg-green-400 text-white py-3 rounded-xl font-bold hover:bg-green-500 transition"
-                >
-                  Setujui
-                </button>
-                <button
-                  onClick={() =>
-                    handleUpdateStatus(selectedBorrowing.id, "Rejected")
-                  }
-                  className="flex-1 bg-red-500 text-white py-3 rounded-xl font-bold hover:bg-red-600 transition"
-                >
-                  Tolak
-                </button>
-              </div>
-              <button
-                onClick={() => handleDelete(selectedBorrowing.id)}
-                className="w-full text-red-500 py-3 rounded-xl font-bold hover:bg-red-50 transition"
-              >
-                🗑️ Hapus Permanen
-              </button>
-              <button
-                onClick={() => setSelectedBorrowing(null)}
-                className="w-full bg-slate-100 text-slate-500 py-3 rounded-xl font-bold"
-              >
-                Tutup
-              </button>
+              {user.role === "Admin" ? (
+                <>
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() =>
+                        handleUpdateStatus(selectedBorrowing.id, "Approved")
+                      }
+                      className="flex-1 bg-green-400 text-white py-3 rounded-xl font-bold hover:bg-green-500 transition"
+                    >
+                      Setujui
+                    </button>
+                    <button
+                      onClick={() =>
+                        handleUpdateStatus(selectedBorrowing.id, "Rejected")
+                      }
+                      className="flex-1 bg-red-500 text-white py-3 rounded-xl font-bold hover:bg-red-600 transition"
+                    >
+                      Tolak
+                    </button>
+                  </div>
+                  <button
+                    onClick={() => handleDelete(selectedBorrowing.id)}
+                    className="w-full text-red-500 py-3 rounded-xl font-bold hover:bg-red-50 transition"
+                  >
+                    🗑️ Hapus Permanen
+                  </button>
+                </>
+              ) : (
+                <div className="bg-slate-50 p-4 rounded-xl text-center border border-slate-100 mb-2">
+                  <p className="text-xs font-bold text-slate-400 uppercase">
+                    Status Saat Ini
+                  </p>
+                  <p className="font-bold text-pink-500">
+                    {selectedBorrowing.status}
+                  </p>
+                </div>
+              )}
             </div>
+            <button
+              onClick={() => setSelectedBorrowing(null)}
+              className="w-full bg-slate-100 text-slate-500 py-3 rounded-xl font-bold"
+            >
+              Tutup
+            </button>
           </div>
         </div>
       )}
