@@ -23,7 +23,7 @@ export default function BorrowingList({ user }: { user: any }) {
     purpose: "",
   });
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(7);
+  const [itemsPerPage] = useState(6);
 
   const API_URL = "http://localhost:5276/api/borrowings";
 
@@ -108,8 +108,8 @@ export default function BorrowingList({ user }: { user: any }) {
       alert(`Status berhasil diubah menjadi ${newStatus}`);
       await fetchData();
       if (response.data) setSelectedBorrowing(response.data);
-    } catch (err) {
-      alert("Gagal mengubah status");
+    } catch (err: any) {
+      alert(err.response?.data?.message || "Gagal mengubah status");
     }
   };
 
@@ -127,14 +127,19 @@ export default function BorrowingList({ user }: { user: any }) {
   };
 
   const handleDelete = async (id: number) => {
-    if (window.confirm("Hapus data secara permanen?")) {
+    const message =
+      user.role === "Admin"
+        ? "Hapus data secara permanen?"
+        : "Batalkan pengajuan peminjaman ini?";
+
+    if (window.confirm(message)) {
       try {
         await axios.delete(`${API_URL}/${id}`);
-        alert("Data berhasil dihapus!");
+        alert("✅ Data berhasil dihapus!");
         setSelectedBorrowing(null);
         fetchData();
-      } catch (err) {
-        alert("Gagal menghapus data.");
+      } catch (err: any) {
+        alert(err.response?.data?.message || "Gagal menghapus data.");
       }
     }
   };
@@ -171,7 +176,7 @@ export default function BorrowingList({ user }: { user: any }) {
       setShowForm(false);
       fetchData();
     } catch (err) {
-      alert("Gagal simpan data");
+      alert("Ruangan sudah dibooking pada waktu tersebut");
     }
   };
 
@@ -379,6 +384,15 @@ export default function BorrowingList({ user }: { user: any }) {
                   >
                     Edit
                   </button>
+                  {user.role === "User" && b.status === "Pending" && (
+                    <button
+                      onClick={() => handleDelete(b.id)}
+                      className="text-red-400 hover:text-amber-800 text-sm font-bold"
+                      title="Batalkan Pengajuan"
+                    >
+                      hapus
+                    </button>
+                  )}
                 </td>
               </tr>
             ))}

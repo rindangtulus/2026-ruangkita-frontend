@@ -6,6 +6,7 @@ import Rooms from "./pages/Rooms";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Profile from "./pages/Profile";
+import RoomListUser from "./pages/RoomListUser";
 
 export default function App() {
   const [user, setUser] = useState<any>(null);
@@ -49,6 +50,9 @@ export default function App() {
           <Dashboard user={user} setActivePage={setActivePage} />
         );
       case "profile":
+        return <Profile user={user} onUpdateUser={(data) => setUser(data)} />;
+      case "rooms-user":
+        return <RoomListUser />;
         return <Profile user={user} onUpdateUser={(data) => setUser(data)} />;
       default:
         return <Dashboard user={user} setActivePage={setActivePage} />;
