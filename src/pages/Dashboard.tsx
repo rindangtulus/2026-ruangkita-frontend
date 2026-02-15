@@ -117,7 +117,7 @@ export default function Dashboard({
                       ? "bg-green-100 text-green-700"
                       : b.status === "Rejected"
                         ? "bg-red-100 text-red-700"
-                        : "bg-pink-100 text-pink-500"
+                        : "bg-amber-100 text-amber-500"
                   }`}
                 >
                   {b.status}
