@@ -109,18 +109,24 @@ export default function Sidebar({
       </div>
       <div className="p-4 border-t border-slate-100 bg-slate-50/50">
         <div className="flex items-center gap-3 mb-4 px-2">
-          <div className="w-10 h-10 rounded-full bg-pink-500 flex items-center justify-center text-white font-black shrink-0">
-            {user.username ? user.username[0].toUpperCase() : "U"}
-          </div>
-          <div className="overflow-hidden">
-            <p className="text-sm font-bold text-slate-800 truncate">
-              {user.fullName}
-            </p>
-            <p className="text-[10px] font-bold text-pink-500 uppercase tracking-widest">
-              {user.role}
-            </p>
-          </div>
+          <button
+            onClick={() => setActivePage("profile")}
+            className={`flex w-full p-3 rounded-xl transition-all ${activePage === "profile" ? "bg-pink-50 text-pink-600" : "text-slate-600 hover:bg-slate-100"}`}
+          >
+            <div className="w-10 h-10 rounded-full bg-pink-500 flex items-center justify-center text-white font-black shrink-0">
+              {user.username ? user.username[0].toUpperCase() : "U"}
+            </div>
+            <div className="overflow-hidden">
+              <p className="text-sm px-4 font-bold text-slate-800 truncate">
+                {user.fullName}
+              </p>
+              <p className="text-[10px] font-bold text-pink-500 uppercase tracking-widest">
+                {user.role}
+              </p>
+            </div>
+          </button>
         </div>
+
         <button
           onClick={onLogout}
           className="w-full flex items-center justify-center gap-2 p-3 rounded-xl bg-red-50 text-red-600 font-bold hover:bg-red-100 transition-all border border-red-100"
